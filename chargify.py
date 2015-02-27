@@ -96,10 +96,6 @@ class ChargifyHttpClient(object):
         except ValueError:
             data = {'body': result} #Is not JSON
 
-        if response.code in ERROR_CODES and ERROR_CODES[response.code] is not False:
-            error_class = ERROR_CODES[e.code]
-            raise error_class(data)
-
         return data
 
 class Chargify(object):
