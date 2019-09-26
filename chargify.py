@@ -74,7 +74,7 @@ class ChargifyHttpClient(object):
 
         # Build header
         request.get_method = lambda: method
-        request.add_header('Authorization', 'Basic %s' % base64.encodestring(('%s:%s' % (api_key, 'x')).encode('utf-8'))[:-1])
+        request.add_header('Authorization', 'Basic %s' % base64.encodestring(('%s:%s' % (api_key, 'x')).encode('utf-8')).decode()[:-1])
         request.add_header('User-Agent', 'Chargify Python Client')
         request.add_header('Accept', 'application/json')
         request.add_header('Content-Type', 'application/json')
