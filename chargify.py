@@ -74,7 +74,7 @@ class ChargifyHttpClient(object):
 
         # Build header
         request.get_method = lambda: method
-        request.add_header('Authorization', 'Basic %s' % base64.encodestring('%s:%s' % (api_key, 'x'))[:-1])
+        request.add_header('Authorization', 'Basic %s' % base64.encodestring(('%s:%s' % (api_key, 'x')).encode('utf-8'))[:-1])
         request.add_header('User-Agent', 'Chargify Python Client')
         request.add_header('Accept', 'application/json')
         request.add_header('Content-Type', 'application/json')
@@ -97,7 +97,7 @@ class ChargifyHttpClient(object):
             data = {'body': result} #Is not JSON
 
         if response.code in ERROR_CODES and ERROR_CODES[response.code] is not False:
-            error_class = ERROR_CODES[e.code]
+            error_class = ERROR_CODES[response.code]
             raise error_class(data)
 
         return data
@@ -177,4 +177,3 @@ class Chargify(object):
     def __call__(self, **kwargs):
         url, method, data = self.construct_request(**kwargs)
         return self.client.make_request(url, method, data, self.api_key)
-
