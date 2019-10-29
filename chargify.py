@@ -176,4 +176,5 @@ class Chargify(object):
 
     def __call__(self, **kwargs):
         url, method, data = self.construct_request(**kwargs)
+        data = data.encode('utf-8')
         return self.client.make_request(url, method, data, self.api_key)
