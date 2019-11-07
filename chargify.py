@@ -5,8 +5,8 @@ except ImportError:
         import json
     except ImportError:
         raise EnvironmentError("You must have a JSON module installed such as simplejson")
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import base64
 
 # Define all exceptions
@@ -69,12 +69,12 @@ class ChargifyHttpClient(object):
         :param method: The HTTP method to use.
         :param data: Any POST data that should be included with the request.
         """
-        opener = urllib2.build_opener(urllib2.HTTPHandler)
-        request = urllib2.Request(url=url, data=data)
+        opener = urllib.request.build_opener(urllib.request.HTTPHandler)
+        request = urllib.request.Request(url=url, data=data)
 
         # Build header
         request.get_method = lambda: method
-        request.add_header('Authorization', 'Basic %s' % base64.encodestring('%s:%s' % (api_key, 'x'))[:-1])
+        request.add_header('Authorization', 'Basic %s' % base64.encodestring(('%s:%s' % (api_key, 'x')).encode('utf-8')).decode()[:-1])
         request.add_header('User-Agent', 'Chargify Python Client')
         request.add_header('Accept', 'application/json')
         request.add_header('Content-Type', 'application/json')
@@ -84,9 +84,9 @@ class ChargifyHttpClient(object):
         # Make request and trap for HTTP errors
         try:
             response = opener.open(request)
-        except urllib2.HTTPError, e:
+        except urllib.error.HTTPError as e:
             response = e
-        except urllib2.URLError, e:
+        except urllib.error.URLError as e:
             raise ChargifyConnectionError(e)
 
         result = response.read()
@@ -97,7 +97,7 @@ class ChargifyHttpClient(object):
             data = {'body': result} #Is not JSON
 
         if response.code in ERROR_CODES and ERROR_CODES[response.code] is not False:
-            error_class = ERROR_CODES[e.code]
+            error_class = ERROR_CODES[response.code]
             raise error_class(data)
 
         return data
@@ -143,14 +143,14 @@ class Chargify(object):
         path = self.path[:]
 
         # Find the HTTP method if we were called with create(), update(), read(), or delete()
-        if path[-1] in VERBS.keys():
+        if path[-1] in list(VERBS.keys()):
             action = path.pop()
             method = VERBS[action]
         else:
             method = 'GET'
 
         # Extract certain kwargs and place them in the url instead
-        for identifier, name in IDENTIFIERS.items():
+        for identifier, name in list(IDENTIFIERS.items()):
             value = kwargs.pop(identifier, None)
             if value:
                 path.insert(path.index(name)+1, str(value))
@@ -164,7 +164,7 @@ class Chargify(object):
         get_params = kwargs.pop("get_params", {})
         if method == 'GET' and (kwargs or get_params):
             get_params.update(kwargs)
-            args = "?%s" % (urllib.urlencode(get_params, True))
+            args = "?%s" % (urllib.parse.urlencode(get_params, True))
         else:
             args = ''
 
@@ -176,5 +176,6 @@ class Chargify(object):
 
     def __call__(self, **kwargs):
         url, method, data = self.construct_request(**kwargs)
+        if data:
+            data = data.encode('utf-8')
         return self.client.make_request(url, method, data, self.api_key)
-
